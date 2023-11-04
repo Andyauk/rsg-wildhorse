@@ -1,13 +1,11 @@
-
-# Edit by @RMS_dnb
-- add option to send wild caught tamed horses to the stables. Job locked to "horsetrainer" must have "saddlebag" in inventory.
-
 # RexshackGaming
 - discord : https://discord.gg/s5uSk56B65
 - github : https://github.com/Rexshack-RedM
 
 # Dependancies
 - rsg-core
+- rsg-horses
+- rsg-horsetrainer
 - rsg-menu
 
 # Installation

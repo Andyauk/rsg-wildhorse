@@ -4,7 +4,7 @@ local Translations =
     {
         something_went_wrong = 'Something went wrong!',
         you_dont_have_any_horse_to_sell = "You don\'t have any horse to sell!",
-        owned_horse = 'Unfortunately you can\'t sell or save your own horse!',
+        owned_horse = 'put away your ownded horse before selling!',
         you_dont_have_any_horse_to_save = 'You are not on a wild caught tamed horse',
         not_tamed = 'You can only sell or save a wild horse you tamed by yourself!'
     },

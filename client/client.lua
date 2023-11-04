@@ -4,8 +4,11 @@ local createdEntries = {}
 local selling = false
 local cooldown = false
 local cooldowntimer = 0
+local gender = nil
 
--- Delete Entity
+-------------------------------------------------------------
+-- delete entity
+-------------------------------------------------------------
 local DeleteThis = function(horse)
     NetworkRequestControlOfEntity(horse)
     SetEntityAsMissionEntity(riding, true, true)
@@ -44,7 +47,9 @@ Citizen.CreateThread(function()
     end
 end)
 
--- Sell Wild Horse Menu
+-------------------------------------------------------------
+-- sell wild horse menu
+-------------------------------------------------------------
 RegisterNetEvent('rsg-sellwildhorse:client:menu', function(name)
     if selling then return end
 
@@ -57,8 +62,7 @@ RegisterNetEvent('rsg-sellwildhorse:client:menu', function(name)
             time = 'minutes'
         end
 
-        RSGCore.Functions.Notify('You need to wait '..timer..' '..time..' before selling another Wild Horse!', 'error', 3000)
-
+        lib.notify({ title = 'Please Wait!', description = 'you need to wait '..timer..' '..time..' before selling another Wild Horse!', type = 'inform' })
         return
     end
     
@@ -88,7 +92,9 @@ RegisterNetEvent('rsg-sellwildhorse:client:menu', function(name)
     
 end)
 
--- Sell Horse Event
+-------------------------------------------------------------
+-- sell horse event
+-------------------------------------------------------------
 AddEventHandler('rsg-sellwildhorse:client:sellhorse', function()
     local ped = PlayerPedId()
     local horse = Citizen.InvokeNative(0xE7E11B8DCBED1058, ped)
@@ -105,7 +111,8 @@ AddEventHandler('rsg-sellwildhorse:client:sellhorse', function()
     end
 
     if not horse or horse == 0 then
-        RSGCore.Functions.Notify(Lang:t('error.you_dont_have_any_horse_to_sell'), 'error', 3000)
+
+        lib.notify({ title = 'No Horse!', description = Lang:t('error.you_dont_have_any_horse_to_sell'), type = 'error' })
 
         Wait(3000)
 
@@ -115,7 +122,8 @@ AddEventHandler('rsg-sellwildhorse:client:sellhorse', function()
     end
 
     if not owner or owner ~= ped then
-        RSGCore.Functions.Notify(Lang:t('error.not_tamed'), 'error', 3000)
+
+        lib.notify({ title = 'Not Tamed!', description = Lang:t('error.not_tamed'), type = 'error' })
 
         Wait(3000)
 
@@ -125,7 +133,8 @@ AddEventHandler('rsg-sellwildhorse:client:sellhorse', function()
     end
 
     if myhorse and myhorse ~= 0 then
-        RSGCore.Functions.Notify(Lang:t('error.owned_horse'), 'error', 3000)
+
+        lib.notify({ title = 'Owned Horse Out!', description = Lang:t('error.owned_horse'), type = 'error' })
 
         Wait(3000)
 
@@ -212,28 +221,9 @@ if Config.Debug then
     end)
 end
 
--- Cleanup
-AddEventHandler('onResourceStop', function(resourceName)
-    if GetCurrentResourceName() ~= resourceName then return end
-
-    FreezeEntityPosition(PlayerPedId(), false)
-
-    for i = 1, #createdEntries do
-        if createdEntries[i].type == 'PROMPT' then
-            if createdEntries[i].handle then
-                exports['rsg-core']:deletePrompt(createdEntries[i].handle)
-            end
-        end
-
-        if createdEntries[i].type == 'BLIP' then
-            if createdEntries[i].handle then
-                RemoveBlip(createdEntries[i].handle)
-            end
-        end
-    end
-end)
-
----save Wild Horse to stables
+-------------------------------------------------------------
+-- save wild horse to stables
+-------------------------------------------------------------
 local RSGCore = exports['rsg-core']:GetCoreObject()
 
 local createdEntries = {}
@@ -247,7 +237,9 @@ function CheckIfHorseIsWildAndUntamed(model)
     return true -- Return true if wild and untamed, false if not
 end
 
--- Save Wild Horse Event (Client-Side)
+-------------------------------------------------------------
+-- save wild horse event (client-side)
+-------------------------------------------------------------
 AddEventHandler('rms-wildhorsestable:client:wildhorsestable', function()
     local ped = PlayerPedId()
     local horse = Citizen.InvokeNative(0xE7E11B8DCBED1058, ped)
@@ -264,62 +256,61 @@ AddEventHandler('rms-wildhorsestable:client:wildhorsestable', function()
     end
 
     if not horse or horse == 0 then
-        RSGCore.Functions.Notify(Lang:t('error.you_dont_have_any_horse_to_save'), 'error', 3000)
+        lib.notify({ title = 'No Horse to Save!', description = Lang:t('error.you_dont_have_any_horse_to_save'), type = 'error' })
         Wait(3000)
         return
     end
 
     if not owner or owner ~= ped then
-        RSGCore.Functions.Notify(Lang:t('error.not_tamed'), 'error', 3000)
+        lib.notify({ title = 'No Tamed Horse!', description = Lang:t('error.not_tamed'), type = 'error' })
         Wait(3000)
         return
     end
 
     if myhorse and myhorse ~= 0 then
-        RSGCore.Functions.Notify(Lang:t('error.owned_horse'), 'error', 3000)
+        lib.notify({ title = 'Owned Horse Out!', description = Lang:t('error.owned_horse'), type = 'error' })
         Wait(3000)
         return
     end
 
     -- Check if the horse is wild and untamed before saving
     if not CheckIfHorseIsWildAndUntamed(model) then
-        RSGCore.Functions.Notify('You can only save wild and untamed horses!', 'error', 3000)
+        lib.notify({ title = 'Untamed Horse!', description = 'you can only save wild and untamed horses!', type = 'error' })
         Wait(3000)
         return
     end
 
-    -- Prompt the player to enter horse details (name and gender)
-    local horseName = GetUserInput("Enter horse name:")
-    local gender = GetUserInput("Enter horse gender (Male/Female):")
-
-    if horseName and gender then
-        TriggerServerEvent('rms-wildhorsestable:server:WildHorseStable', model, horseName, gender)
-        
-        
+    -- get horse gender
+    local horsegender = IsPedMale(horse)
+    
+    if horsegender == 1 then
+        gender = 'male'
     else
-        RSGCore.Functions.Notify('Invalid horse name or gender.', 'error', 3000)
+        gender = 'female'
     end
+    
+    TriggerEvent('rsg-wildhorse:client:setname', model, gender)
+
 end)
 
--- Function to get user input via a modal dialog (with text prompt)
-function GetUserInput(prompt, defaultText)
-    local input = defaultText or ""
-    AddTextEntry("FMMC_KEY_TIP8", prompt)
-    DisplayOnscreenKeyboard(1, "FMMC_KEY_TIP8", "", "", "", "", "", 30)
-    while UpdateOnscreenKeyboard() ~= 1 and UpdateOnscreenKeyboard() ~= 2 do
-        Wait(0)
-    end
-    if UpdateOnscreenKeyboard() ~= 2 then
-        input = GetOnscreenKeyboardResult()
-        Wait(500)
-    end
-    return input
-end
+RegisterNetEvent('rsg-wildhorse:client:setname', function(model, gender)
 
--- Your existing code for cooldown handling
--- Your existing code for setting horses as wild (debug)
+    local input = lib.inputDialog('Name your Horse', {
+        { 
+            label = 'Name',
+            type = 'input',
+            required = true,
+        },
+    })
+    if not input then return end
 
--- Cleanup
+    TriggerServerEvent('rsg-wildhorse:server:WildHorseStable', model, gender, input[1])
+
+end)
+
+-------------------------------------------------------------
+-- cleanup
+-------------------------------------------------------------
 AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
 
