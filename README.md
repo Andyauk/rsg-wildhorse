@@ -16,3 +16,7 @@
 
 # Starting the resource
 - add the following to your server.cfg file: ensure rsg-wildhorse
+
+# Notes
+- Should your locations be near where wild horses are, that you havent tamed you will not be able to sell, so we suggest to move the locations in the config.
+- if another horse in the the sell area you will need to move it, so you can sell your wild horse.
